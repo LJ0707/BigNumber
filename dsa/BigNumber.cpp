@@ -1,7 +1,11 @@
 #include<iostream>
 #include<stack>
 #include<string>
+#include<cmath>
+#include<ctime>
 #include"BigNumber.h"
+
+#define TEXTTIME 10
 
 BigNumber zero(0);
 BigNumber one(1);
@@ -56,6 +60,9 @@ void BigNumber::unsignedprintBigNumber() {
 	std::stack<int> s;
 	BigNumber remainder;
 	BigNumber tmp = *this;
+	if (BigNumber::unsignedisEqual(tmp,zero)) {
+		std::cout << 0 << std::endl;
+	}
 	while (!BigNumber::unsignedisEqual(tmp, zero)) {
 		remainder = tmp % ten;
 		tmp = tmp / ten;
@@ -68,20 +75,38 @@ void BigNumber::unsignedprintBigNumber() {
 	std::cout << std::endl;
 }
 
-BigNumber::BigNumber(std::string s) {
-	memset(BigNumber::number, 0, MAXLENGTH);
+BigNumber::BigNumber(std::string s,int n) {
+	memset(BigNumber::number, 0, MAXLENGTH*sizeof(uint32_t));
 	int len = s.length();
-	*this = zero;
-	for (int i = 0; i < len; i++) {
-		if (i != 0) {
-			*this = *this*ten;
+	BigNumber result;
+	std::cout << "len  " << s << std::endl;
+	result = zero;
+	if (n == 10) {
+		for (int i = 0; i < len; i++) {
+			if (i != 0) {
+				result = result * ten;
+			}
+			result = result + NUMS[int(s[i] - '0')];
+			std::cout << result.length << "   ";
+			result.unsignedprintBigNumber();
 		}
-		*this = *this + NUMS[int(s[i]-'0')];
+		*this = result;
+	}
+	else if (n==2) {
+		for (int i = 0; i < len; i++) {
+			if (i != 0) {
+				*this = *this*NUMS[2];
+			}
+			*this = *this + NUMS[int(s[i] - '0')];
+		}
+	}
+	else {
+
 	}
 }
 
 BigNumber::BigNumber(uint64_t num) {
-	memset(BigNumber::number, 0, MAXLENGTH);
+	memset(BigNumber::number, 0, MAXLENGTH * sizeof(uint32_t));
 	if (num >> 32) {
 		this->length = 2;
 		this->number[0] = uint32_t(num);
@@ -94,17 +119,18 @@ BigNumber::BigNumber(uint64_t num) {
 }
 
 BigNumber::BigNumber() {
-	memset(BigNumber::number, 0, MAXLENGTH);
+	memset(BigNumber::number, 0, MAXLENGTH * sizeof(uint32_t));
 	BigNumber::length = 1;
 	BigNumber::number[0] = 0;
 }
 
-void BigNumber::addBigNumber(BigNumber&, BigNumber&, BigNumber&) {
-
-}
+//void BigNumber::addBigNumber(BigNumber&, BigNumber&, BigNumber&) {
+//
+//}
 
 void BigNumber::unsignedaddBigNumber(BigNumber&a, BigNumber&b, BigNumber&result) {
 	uint32_t carry = 0;
+	result = a;
 	if (a.length<b.length) {
 		result.length = b.length;
 	}
@@ -117,10 +143,9 @@ void BigNumber::unsignedaddBigNumber(BigNumber&a, BigNumber&b, BigNumber&result)
 		carry = (sum >> 32);
 		result.number[i] = (sum & 0xffffffff);
 	}
-	if (carry!=0) {
-		result.number[result.length] = carry;
-		result.length += carry;
-	}
+	result.number[result.length] = carry;
+	result.length += carry;
+
 }
 
 void BigNumber::unsignedsubBigNumber(BigNumber&a, BigNumber&b, BigNumber&result) {
@@ -145,21 +170,23 @@ void BigNumber::unsignedmulBigNumber(BigNumber&a, BigNumber&b, BigNumber&result)
 	result.length = a.length + b.length - 1;
 	for (int i = 0; i < result.length; i++) {
 		uint64_t sum = carry;
+		carry = 0;
 		for (int j = 0; j < b.length; j++) {
 			if (((i - j) >= 0) && ((i - j)<a.length)) {
 				uint64_t mul = a.number[i - j];
-				mul *= b.number[j];
-				carry = (mul >> 32);
-				sum += (mul & 0xffffffff);
+				mul =mul* b.number[j];
+				carry = carry + (mul >> 32);
+				mul = mul & 0x00000000ffffffff;
+				sum = sum + mul;
 			}
 		}
-		carry += (sum >> 32);
+		carry = carry + (sum >> 32);
 		result.number[i] = uint32_t(sum);
 	}
 	/*处理最高位*/
 	if (carry!=0) {
 		result.length++;
-		result.number[result.length - 1] = uint32_t(carry);
+		result.number[result.length - 1] = uint32_t(carry&0x00000000ffffffff);
 	}
 }
 
@@ -218,6 +245,11 @@ void BigNumber::unsigneddivBigNumber(BigNumber&value1, BigNumber&value2, BigNumb
 			BigNumber::unsignedmulBigNumber(value2, multi, tmp);
 			BigNumber::unsignedsubBigNumber(a, tmp, tmp1);
 			a = tmp1;
+			/*if (BigNumber::unsignedisEqual(a, value2)) {
+				a = zero;
+				r = r + one;
+				break;
+			}*/
 		}
 		result = r;
 		remainder = a;
@@ -401,6 +433,122 @@ int BigNumber::Jacobi(BigNumber n) {
 	return J;
 }
 
+/*计算a^bmodc*/
 BigNumber BigNumber::bigNumMod(BigNumber b,BigNumber c) {
+	BigNumber value = *this;
+	BigNumber result = 1;
+	BigNumber tmp;
+	uint32_t num;
+	int count;
+	int len = int(log10(b.number[b.length - 1]) / log10(2))+1;
+	for (int i = 0; i < b.length;i++) {
+		num = b.number[i];
+		if (i != (b.length - 1))count = 32;
+		else count = len;
+		std::cout << "count  " << count << std::endl;
+		if (num & 0x00000001) {
+			result = result * value;
+			result = result % c;
+		}
+		for (int j = 0; j < count - 1; j++) {
+			num = (num >> 1);
+			value = value * value;
+			value = value % c;
+			if (num&0x00000001) {
+				result = result * value;
+				result = result % c;
+			}
+		}
+		if (i != (b.length - 1)) {
+			value = value * value;
+			value = value % c;
+		}
+	}
+	return result;
+}
 
+/*大整数转换位字符串，十进制的形式的字符串*/
+std::string BigNumber::BigNumberToString() {
+	BigNumber value = *this;
+	BigNumber tmp;
+	char ch;
+	std::string s;
+	std::stack<char> tk;
+	tmp = value % NUMS[10];
+	ch = char(tmp.number[0])+'0';
+	tk.push(ch);
+	value = value / NUMS[10];
+	while (!BigNumber::unsignedisEqual(value,zero)) {
+		tmp = value % NUMS[10];
+		ch = char(tmp.number[0]) + '0';
+		tk.push(ch);
+		value = value / NUMS[10];
+	}
+	while (!tk.empty()) {
+		s.push_back(tk.top());
+		tk.pop();
+	}
+	return s;
+}
+
+/*随机返回一个n位大素数(二进制位)*/
+BigNumber BigNumber::generatePrimeNumber(int n) {
+	std::string s;
+	std::string s1;
+	BigNumber result;
+	s.resize(n);
+	s1.resize(n);
+	s[0] = '1';
+	s[n - 1] = '1';
+	for (int i = 0; i < n; i++)s1[i] = '1';
+	BigNumber stand(s1,2);
+	while (1) {
+		if (BigNumber::compareBigNumber(result, stand) == 1) {
+			srand((unsigned)time(NULL));
+			for (int i = 1; i < n - 1; i++) {
+				s[i] = char(rand() % 2) + '0';
+			}
+		}
+		else {
+			result = result + NUMS[2];
+		}
+		result = BigNumber(s, 2);
+		result.unsignedprintBigNumber();
+		if (result.Miller_Rabin())break;
+	}
+	return result;
+}
+
+/*Miller-Rabin素性测试*/
+int BigNumber::Miller_Rabin() {
+	BigNumber value = *this - one;
+	BigNumber m = value;
+	BigNumber obj = *this;
+	int s = 1;
+	int r;
+	BigNumber tmp(one);
+	BigNumber remainder = m % NUMS[2];
+	while (BigNumber::unsignedisEqual(remainder, zero)) {
+		m = m / 2;
+		s++;
+		remainder = m % NUMS[2];
+	}
+	std::cout << "S  " << s << std::endl;
+	for (int i = 0; i < TEXTTIME;i++) {
+		tmp = tmp + 1;
+		r = 0;
+		BigNumber z = tmp.bigNumMod(m, *this);
+		if (BigNumber::unsignedisEqual(z, one) || BigNumber::unsignedisEqual(z, value))continue;
+		else {
+			while (1) {
+				if (r == (s - 1)) {
+					return 0;
+				}
+				z = z.bigNumMod(NUMS[2],*this);
+				if (BigNumber::unsignedisEqual(z, value))break;
+				r = r + 1;
+			}
+		}
+	}
+	return 1;
 }
