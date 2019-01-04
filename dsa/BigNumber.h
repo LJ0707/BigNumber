@@ -65,7 +65,7 @@ public:
 	/*大整数转换位字符串，十进制的形式的字符串*/
 	std::string BigNumberToString();
 
-	/*随机返回一个n位大素数(二进制位)*/
+	/*随机返回一个n位大素数(n位二进制位)*/
 	BigNumber generatePrimeNumber(int n);
 
 	/*Miller-Rabin素性测试*/

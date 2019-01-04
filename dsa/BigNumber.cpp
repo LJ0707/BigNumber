@@ -81,7 +81,6 @@ BigNumber::BigNumber(std::string s,int n) {
 	memset(BigNumber::number, 0, MAXLENGTH*sizeof(uint32_t));
 	int len = s.length();
 	BigNumber result,tmp;
-	std::cout << "len  " << s.length() << std::endl;
 	result = zero;
 	if (n == 10) {								//Ê®½øÖÆ
 		for (int i = 0; i < len; i++) {
@@ -140,7 +139,7 @@ void BigNumber::unsignedaddBigNumber(BigNumber&a, BigNumber&b, BigNumber&result)
 	}
 	for (int i = 0; i < result.length; i++) {
 		uint64_t sum = b.number[i];
-		sum = sum + uint64_t(carry) + uint64_t(a.number[i]);
+		sum = sum + carry + a.number[i];
 		carry = (sum >> 32);
 		result.number[i] = (sum & 0x00000000ffffffff);
 	}
@@ -198,7 +197,6 @@ void BigNumber::unsigneddivBigNumber(BigNumber&value1, BigNumber&value2, BigNumb
 	BigNumber r = zero;
 	BigNumber a = value1;
 	BigNumber tmp = zero;
-	BigNumber tmp1(0);
 	if (BigNumber::compareBigNumber(value1, value2) == 0) {
 		result = one;
 		remainder = zero;
@@ -433,7 +431,6 @@ BigNumber BigNumber::bigNumMod(BigNumber b,BigNumber c) {
 		num = b.number[i];
 		if (i != (b.length - 1))count = 32;
 		else count = len;
-		std::cout << "count  " << count << std::endl;
 		if (num & 0x00000001) {
 			result = result * value;
 			result = result % c;
@@ -484,23 +481,28 @@ BigNumber BigNumber::generatePrimeNumber(int n) {
 	std::string s;
 	std::string s1;
 	BigNumber result;
+	srand((unsigned)time(0));
 	s.resize(n);
 	s1.resize(n);
 	s[0] = '1';
 	s[n - 1] = '1';
 	for (int i = 0; i < n; i++)s1[i] = '1';
 	BigNumber stand(s1,2);
+	for (int i = 1; i < n - 1; i++) {
+		s[i] = char(rand() % 2) + '0';
+	}
+	result = BigNumber::BigNumber(s, 2);
 	while (1) {
-		if (BigNumber::compareBigNumber(result, stand) == 1) {
-			srand((unsigned)time(NULL));
+		if (!(BigNumber::compareBigNumber(result, stand) == -1)) {
+			srand((unsigned)time(0));
 			for (int i = 1; i < n - 1; i++) {
 				s[i] = char(rand() % 2) + '0';
 			}
+			result = BigNumber::BigNumber(s, 2);
 		}
 		else {
 			result = result + NUMS[2];
 		}
-		result = BigNumber(s, 2);
 		result.unsignedprintBigNumber();
 		if (result.Miller_Rabin())break;
 	}
@@ -521,7 +523,6 @@ int BigNumber::Miller_Rabin() {
 		s++;
 		remainder = m % NUMS[2];
 	}
-	std::cout << "S  " << s << std::endl;
 	for (int i = 0; i < TEXTTIME;i++) {
 		tmp = tmp + 1;
 		r = 0;

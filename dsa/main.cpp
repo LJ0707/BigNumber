@@ -13,21 +13,9 @@ int main(int argc,char**argv) {
 	BigNumber b(s1,10);
 	BigNumber c(1);
 	BigNumber d(10);
-	a.unsignedprintBigNumber();
-	a = a * d;
-	cout <<"liangji"<< a.unsignedisEqual(a,b) << endl;
-	/*a.unsignedprintBigNumber();
-	s1 = a.BigNumberToString();
-	cout << s1 << endl;*/
-	/*c = a * d;
-	c.unsignedprintBigNumber();*/
-	/*d = a - c;
+	
+	d = d.generatePrimeNumber(100);
 	d.unsignedprintBigNumber();
-	d = b.bigNumMod(d,a);
-	d.unsignedprintBigNumber();*/
-	//cout << a.Miller_Rabin() << endl;
-	/*d = d.generatePrimeNumber(30);
-	d.unsignedprintBigNumber();*/
 	getchar();
 	return 0;
 }
