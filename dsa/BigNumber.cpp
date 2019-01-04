@@ -56,8 +56,9 @@ BigNumber BigNumber::operator%(BigNumber a) {
 	return d;
 }
 
+/*向屏幕输出无符号大整数*/
 void BigNumber::unsignedprintBigNumber() {
-	std::stack<int> s;
+	std::stack<unsigned int> s;
 	BigNumber remainder;
 	BigNumber tmp = *this;
 	if (BigNumber::unsignedisEqual(tmp,zero)) {
@@ -66,7 +67,7 @@ void BigNumber::unsignedprintBigNumber() {
 	while (!BigNumber::unsignedisEqual(tmp, zero)) {
 		remainder = tmp % ten;
 		tmp = tmp / ten;
-		s.push(int(remainder.number[0]));
+		s.push(unsigned int(remainder.number[0]));
 	}
 	while (!s.empty()) {
 		std::cout << s.top();
@@ -75,13 +76,14 @@ void BigNumber::unsignedprintBigNumber() {
 	std::cout << std::endl;
 }
 
+/*根据string构建无符号大整数对象，n代表进制数*/
 BigNumber::BigNumber(std::string s,int n) {
 	memset(BigNumber::number, 0, MAXLENGTH*sizeof(uint32_t));
 	int len = s.length();
-	BigNumber result;
-	std::cout << "len  " << s << std::endl;
+	BigNumber result,tmp;
+	std::cout << "len  " << s.length() << std::endl;
 	result = zero;
-	if (n == 10) {
+	if (n == 10) {								//十进制
 		for (int i = 0; i < len; i++) {
 			if (i != 0) {
 				result = result * ten;
@@ -92,7 +94,7 @@ BigNumber::BigNumber(std::string s,int n) {
 		}
 		*this = result;
 	}
-	else if (n==2) {
+	else if (n==2) {						//二进制
 		for (int i = 0; i < len; i++) {
 			if (i != 0) {
 				*this = *this*NUMS[2];
@@ -107,12 +109,12 @@ BigNumber::BigNumber(std::string s,int n) {
 
 BigNumber::BigNumber(uint64_t num) {
 	memset(BigNumber::number, 0, MAXLENGTH * sizeof(uint32_t));
-	if (num >> 32) {
+	if (num >> 32) {							//num为64位
 		this->length = 2;
 		this->number[0] = uint32_t(num);
 		this->number[1] = uint32_t(num >> 32);
 	}
-	else {
+	else {										//num为32位
 		this->length = 1;
 		this->number[0] = uint32_t(num);
 	}
@@ -128,6 +130,7 @@ BigNumber::BigNumber() {
 //
 //}
 
+/*无符号大整数加法*/
 void BigNumber::unsignedaddBigNumber(BigNumber&a, BigNumber&b, BigNumber&result) {
 	uint32_t carry = 0;
 	result = a;
@@ -148,6 +151,7 @@ void BigNumber::unsignedaddBigNumber(BigNumber&a, BigNumber&b, BigNumber&result)
 
 }
 
+/*无符号大整数减法*/
 void BigNumber::unsignedsubBigNumber(BigNumber&a, BigNumber&b, BigNumber&result) {
 	uint32_t borrow = 0;
 	result = a;
@@ -165,6 +169,7 @@ void BigNumber::unsignedsubBigNumber(BigNumber&a, BigNumber&b, BigNumber&result)
 	while ((result.number[result.length - 1] == 0)&&result.length>1)result.length--;
 }
 
+/*无符号大整数乘法*/
 void BigNumber::unsignedmulBigNumber(BigNumber&a, BigNumber&b, BigNumber&result) {
 	uint64_t carry = 0;
 	result.length = a.length + b.length - 1;
@@ -190,6 +195,7 @@ void BigNumber::unsignedmulBigNumber(BigNumber&a, BigNumber&b, BigNumber&result)
 	}
 }
 
+/*无符号大整数除法*/
 void BigNumber::unsigneddivBigNumber(BigNumber&value1, BigNumber&value2, BigNumber&result, BigNumber&remainder) {
 	BigNumber r = BigNumber(0);
 	BigNumber a = value1;
@@ -219,7 +225,7 @@ void BigNumber::unsigneddivBigNumber(BigNumber&value1, BigNumber&value2, BigNumb
 				len--;
 				div = ((div << 32) + a.number[a.length - 2]);
 			}
-			div = div / (num + 1);
+			div = div / (num + 1);					//试商
 			BigNumber multi(0);
 			if (div >> 32) {
 				multi.length = 2;
@@ -256,6 +262,7 @@ void BigNumber::unsigneddivBigNumber(BigNumber&value1, BigNumber&value2, BigNumb
 	}
 }
 
+/*无符号大整数比较，相等返回0，value1>value2返回1，value1<value2返回-1，感觉这里得改一改*/
 int BigNumber::compareBigNumber(BigNumber value1, BigNumber value2) {
 	if (value1.sign == 0 && value2.sign == 1) {		//value1>value2
 		return 1;
@@ -311,6 +318,7 @@ int BigNumber::compareBigNumber(BigNumber value1, BigNumber value2) {
 	}
 }
 
+/*判读无符号大整数是否相等*/
 bool BigNumber::unsignedisEqual(BigNumber&a, BigNumber&b) {
 	if (a.length == b.length) {
 		for (int i = 0; i < a.length; i++) {
