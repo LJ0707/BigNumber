@@ -11,14 +11,14 @@ BigNumber zero(0);
 BigNumber one(1);
 BigNumber ten(10);
 
-BigNumber NUMS[11] = {BigNumber(0),BigNumber(1),BigNumber(2),BigNumber(3),BigNumber(4),BigNumber(5),BigNumber(6),
-					BigNumber(7),BigNumber(8),BigNumber(9),BigNumber(10)};
+BigNumber NUMS[11] = {BigNumber(unsigned int(0)),BigNumber(unsigned int(1)),BigNumber(2),BigNumber(3),BigNumber(4),BigNumber(5),BigNumber(6),
+					BigNumber(7),BigNumber(8),BigNumber(9),BigNumber(unsigned int(10))};
 
 
 BigNumber BigNumber::operator=(BigNumber a) {
 	this->length = a.length;
 	this->sign = a.sign;
-	for (int i = 0; i < this->length;i++) {
+	for (int i = 0; i < MAXLENGTH; i++) {
 		this->number[i] = a.number[i];
 	}
 	return *this;
@@ -89,8 +89,6 @@ BigNumber::BigNumber(std::string s,int n) {
 				result = result * ten;
 			}
 			result = result + NUMS[int(s[i] - '0')];
-			std::cout << result.length << "   ";
-			result.unsignedprintBigNumber();
 		}
 		*this = result;
 	}
@@ -111,12 +109,12 @@ BigNumber::BigNumber(uint64_t num) {
 	memset(BigNumber::number, 0, MAXLENGTH * sizeof(uint32_t));
 	if (num >> 32) {							//num为64位
 		this->length = 2;
-		this->number[0] = uint32_t(num);
-		this->number[1] = uint32_t(num >> 32);
+		this->number[0] = uint32_t(num&0x00000000ffffffff);
+		this->number[1] = uint32_t((num >> 32)&0x00000000ffffffff);
 	}
 	else {										//num为32位
 		this->length = 1;
-		this->number[0] = uint32_t(num);
+		this->number[0] = uint32_t(num&0x00000000ffffffff);
 	}
 }
 
@@ -144,7 +142,7 @@ void BigNumber::unsignedaddBigNumber(BigNumber&a, BigNumber&b, BigNumber&result)
 		uint64_t sum = b.number[i];
 		sum = sum + uint64_t(carry) + uint64_t(a.number[i]);
 		carry = (sum >> 32);
-		result.number[i] = (sum & 0xffffffff);
+		result.number[i] = (sum & 0x00000000ffffffff);
 	}
 	result.number[result.length] = carry;
 	result.length += carry;
@@ -162,7 +160,7 @@ void BigNumber::unsignedsubBigNumber(BigNumber&a, BigNumber&b, BigNumber&result)
 		}
 		else {
 			uint64_t sum = 0x100000000 + a.number[i];
-			result.number[i] = sum - b.number[i] - borrow;
+			result.number[i] = uint32_t(sum - b.number[i] - borrow);
 			borrow = 1;
 		}
 	}
@@ -179,7 +177,7 @@ void BigNumber::unsignedmulBigNumber(BigNumber&a, BigNumber&b, BigNumber&result)
 		for (int j = 0; j < b.length; j++) {
 			if (((i - j) >= 0) && ((i - j)<a.length)) {
 				uint64_t mul = a.number[i - j];
-				mul =mul* b.number[j];
+				mul =mul* (uint64_t)b.number[j];
 				carry = carry + (mul >> 32);
 				mul = mul & 0x00000000ffffffff;
 				sum = sum + mul;
@@ -191,22 +189,22 @@ void BigNumber::unsignedmulBigNumber(BigNumber&a, BigNumber&b, BigNumber&result)
 	/*处理最高位*/
 	if (carry!=0) {
 		result.length++;
-		result.number[result.length - 1] = uint32_t(carry&0x00000000ffffffff);
+		result.number[result.length - 1] = uint32_t(carry);
 	}
 }
 
 /*无符号大整数除法*/
 void BigNumber::unsigneddivBigNumber(BigNumber&value1, BigNumber&value2, BigNumber&result, BigNumber&remainder) {
-	BigNumber r = BigNumber(0);
+	BigNumber r = zero;
 	BigNumber a = value1;
-	BigNumber tmp(0);
+	BigNumber tmp = zero;
 	BigNumber tmp1(0);
 	if (BigNumber::compareBigNumber(value1, value2) == 0) {
-		result = BigNumber::BigNumber(1);
-		remainder = BigNumber::BigNumber(0);
+		result = one;
+		remainder = zero;
 	}
 	else if (BigNumber::compareBigNumber(value1, value2) == -1) {
-		result = BigNumber::BigNumber(0);
+		result = zero;
 		remainder = value1;
 	}
 	else {
@@ -215,10 +213,8 @@ void BigNumber::unsigneddivBigNumber(BigNumber&value1, BigNumber&value2, BigNumb
 			uint64_t num = value2.number[value2.length - 1];
 			uint32_t len = a.length - value2.length;
 			if ((div == num) && (len == 0)) {
-				BigNumber::unsignedaddBigNumber(r, one, tmp);
-				r = tmp;
-				BigNumber::unsignedsubBigNumber(a, value2, tmp);
-				a = tmp;
+				r = r + one;
+				a = a - value2;
 				break;
 			}
 			if ((div <= num) && (len > 0)) {
@@ -226,16 +222,7 @@ void BigNumber::unsigneddivBigNumber(BigNumber&value1, BigNumber&value2, BigNumb
 				div = ((div << 32) + a.number[a.length - 2]);
 			}
 			div = div / (num + 1);					//试商
-			BigNumber multi(0);
-			if (div >> 32) {
-				multi.length = 2;
-				multi.number[0] = uint32_t(div);
-				multi.number[1] = uint32_t(div >> 32);
-			}
-			else {
-				multi.length = 1;
-				multi.number[0] = div;
-			}
+			BigNumber multi(div);
 			if (len > 0) {
 				multi.length = multi.length + len;
 				uint32_t i;
@@ -246,16 +233,9 @@ void BigNumber::unsigneddivBigNumber(BigNumber&value1, BigNumber&value2, BigNumb
 					multi.number[i] = 0;
 				}
 			}
-			BigNumber::unsignedaddBigNumber(r, multi, tmp);
-			r = tmp;
-			BigNumber::unsignedmulBigNumber(value2, multi, tmp);
-			BigNumber::unsignedsubBigNumber(a, tmp, tmp1);
-			a = tmp1;
-			/*if (BigNumber::unsignedisEqual(a, value2)) {
-				a = zero;
-				r = r + one;
-				break;
-			}*/
+			r = r + multi;
+			tmp = value2 * multi;
+			a = a - tmp;
 		}
 		result = r;
 		remainder = a;
@@ -319,7 +299,7 @@ int BigNumber::compareBigNumber(BigNumber value1, BigNumber value2) {
 }
 
 /*判读无符号大整数是否相等*/
-bool BigNumber::unsignedisEqual(BigNumber&a, BigNumber&b) {
+bool BigNumber::unsignedisEqual(BigNumber a, BigNumber b) {
 	if (a.length == b.length) {
 		for (int i = 0; i < a.length; i++) {
 			if (a.number[i] != b.number[i]) {

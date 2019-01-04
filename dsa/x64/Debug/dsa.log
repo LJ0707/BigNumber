@@ -1,5 +1,3 @@
 ﻿  BigNumber.cpp
-e:\大三上\密码学\密码学实验\dsa\dsa\bignumber.cpp(80): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
-e:\大三上\密码学\密码学实验\dsa\dsa\bignumber.cpp(161): warning C4244: “=”: 从“uint64_t”转换到“uint32_t”，可能丢失数据
-e:\大三上\密码学\密码学实验\dsa\dsa\bignumber.cpp(231): warning C4244: “=”: 从“uint64_t”转换到“uint32_t”，可能丢失数据
+e:\大三上\密码学\密码学实验\dsa\dsa\bignumber.cpp(82): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
   dsa.vcxproj -> E:\大三上\密码学\密码学实验\dsa\x64\Debug\dsa.exe

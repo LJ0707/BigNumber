@@ -26,7 +26,7 @@ private:
 public:
 
 	/*无符号大整数是否相等，相等返回1，否则为0*/
-	bool unsignedisEqual(BigNumber&, BigNumber&);
+	bool unsignedisEqual(BigNumber, BigNumber);
 
 	/*构造函数根据64为无符号数构建大整数对象*/
 	BigNumber(uint64_t);
